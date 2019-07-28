@@ -14,4 +14,14 @@ end
 
 logpdf(d::ExpFamDist, x) = d.fam.logh(x) + d.fam.logg(d.θ) + d.fam.η(d.θ) * d.fam.t(x)
 
+function iid(n::Integer, d::ExpFamDist{P,X,N})
+    logh(xs) = sum(d.fam.logh.(xs))
+    logg = d.fam.logg
+    η = d.fam.η
+    t(xs) = sum(d.fam.t.(xs))
+
+    fam = ExponentialFamily(logh, logg, η, t)
+    ExpFamDist(fam,d.θ)
+end
+
 end # module
