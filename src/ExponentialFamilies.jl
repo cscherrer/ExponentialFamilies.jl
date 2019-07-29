@@ -1,27 +1,71 @@
-module ExponentialFamilies
+# module ExponentialFamilies
+using Distributions
 
-struct ExponentialFamily{P,X,N}
-    logh # :: X -> Real
-    logg # :: P -> Real
-    η    # :: P -> StaticVector{N, Real}
-    t    # :: X -> StaticVector{N, Real}
+
+# A parameterized exponential family
+struct ExponentialFamily{P,X} 
+    logh :: Function # :: X -> Real
+    logg :: Function # :: P -> Real
+    η    :: Function # :: P -> StaticVector{N, Real}
+    t    :: Function # :: X -> StaticVector{N, Real}
 end
 
-struct ExpFamDist{P,X,N}
-    fam :: ExponentialFamily{P,X,N}
+# A specific instance of a distribution belonging to an exponential family
+struct ExpFamDist{P,X}
+    fam :: ExponentialFamily{P,X}
     θ :: P
 end
 
-logpdf(d::ExpFamDist, x) = d.fam.logh(x) + d.fam.logg(d.θ) + d.fam.η(d.θ) * d.fam.t(x)
+# Find the exponential family distribution instance for a given distribution.
+# This needs to be reworked, since many distributions are not from exponential families
+efam(d::ExpFamDist{P,X} where {P,X}) = d
 
-function iid(n::Integer, d::ExpFamDist{P,X,N})
-    logh(xs) = sum(d.fam.logh.(xs))
-    logg = d.fam.logg
-    η = d.fam.η
-    t(xs) = sum(d.fam.t.(xs))
+Distributions.logpdf(d::ExpFamDist{P,X}, x :: X) where {P,X} = d.fam.logh(x) + d.fam.logg(d.θ) + sum(d.fam.η(d.θ) .* d.fam.t(x))
 
-    fam = ExponentialFamily(logh, logg, η, t)
-    ExpFamDist(fam,d.θ)
+
+function iid(n::Integer, d::ExpFamDist{P,X} ) where {P,X}
+    fam = d.fam
+    logh(xs) = sum(fam.logh.(xs))
+    logg(θ) = n * fam.logg(θ)
+    η(θ) = fam.η(θ)
+    t(xs) = sum(fam.t.(xs))
+
+    newfam = ExponentialFamily{P,Vector{X}}(logh, logg, η, t)
+    ExpFamDist{P,Vector{X}}(newfam,d.θ)
 end
 
-end # module
+iid(n, d ) = iid(n,efam(d))
+
+################################
+# Bernoulli example
+
+
+logit(p) = log(p/(1-p))
+
+function efam(d::Bernoulli{P}) where {P <: Real}
+    logh(x) = 0
+    logg(p) = -log(1 - p)
+    η(p) = logit(p)
+    t(x) = Int(x)
+
+    fam = ExponentialFamily{P,Bool}(logh, logg, η, t)
+    
+    ExpFamDist(fam, d.p)
+end
+
+
+
+
+efam(Bernoulli(0.2))
+
+
+
+binom = iid(1000,Bernoulli(0.2))
+
+using BenchmarkTools
+
+@btime logpdf(binom, repeat([true],1000))
+
+@btime sum(logpdf.(Bernoulli(0.2),repeat([true],1000)))
+
+# end # module
