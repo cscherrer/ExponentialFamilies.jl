@@ -6,15 +6,17 @@ end
 
 struct NatExpFamDist{P,X}
     fam :: NaturalExponentialFamily{P,X}
-    a :: Real
+    # a :: Real # may add this back in later
     η :: P
 end
 
 export logpdf
-function logpdf(d::NatExpFamDist{P,X}, x::X)::Real where {P,X} 
-    d.fam.logh(x) + d.η ⋅ d.fam.t(x) - d.a
+function logpdf(d::NatExpFamDist{P,X}, x::T)::Real where {P,X, T<:X} 
+    d.fam.logh(x) + d.η ⋅ d.fam.t(x) - d.fam.a(d.η)
 end
 
 function (fam::NaturalExponentialFamily{P,X})(η::P) where {P,X}
-    NatExpFamDist{P,X}(fam, fam.a(η), η)
+    NatExpFamDist{P,X}(fam, η)
+end
+
 end
