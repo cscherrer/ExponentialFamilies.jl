@@ -2,3 +2,6 @@ name = "ExponentialFamilies"
 uuid = "e3f29fd2-98f1-11e9-2c12-071269efd997"
 authors = ["Chad Scherrer <chad.scherrer@gmail.com>"]
 version = "0.1.0"
+
+[deps]
+SimpleTraits = "699a6c99-e7fa-54fc-8d76-47d257e15c1d"
