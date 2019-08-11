@@ -11,7 +11,12 @@ struct NatExpFamDist{P,X}
 end
 
 export logpdf
-function logpdf(d::NatExpFamDist{P,X}, x::T)::Real where {P,X, T<:X} 
+function Distributions.logpdf(d::NatExpFamDist{P,X}, x::X)::Real where {P,X} 
+    d.fam.logh(x) + d.η ⋅ d.fam.t(x) - d.fam.a(d.η)
+end
+
+
+function Distributions.logpdf(d::NatExpFamDist{P,X}, x)::Real where {P,X} 
     d.fam.logh(x) + d.η ⋅ d.fam.t(x) - d.fam.a(d.η)
 end
 
